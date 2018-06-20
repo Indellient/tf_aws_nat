@@ -65,8 +65,8 @@ resource "aws_instance" "nat" {
       host = "${var.ssh_bastion_host != "" ? self.private_ip : ""}"
 
       private_key  = "${var.aws_key_location}"
-      bastion_host = "${var.ssh_bastion_host}"
-      bastion_user = "${var.ssh_bastion_user}"
+      # bastion_host = "${var.ssh_bastion_host}"
+      # bastion_user = "${var.ssh_bastion_user}"
     }
   }
 }
