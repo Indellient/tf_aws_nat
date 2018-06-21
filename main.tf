@@ -40,6 +40,12 @@ data "template_file" "user_data" {
   }
 }
 
+resource "null_resource" "ping_bastion" {
+  provisioner "local-exec" {
+    command = "if [ -n ${var.ssh_bastion_host} ]; then until ssh -i ${var.aws_key_location} -o StrictHostKeyChecking=no -q ${var.ssh_bastion_user}@${var.ssh_bastion_host} exit; do sleep 2; done; fi"
+  }
+}
+
 resource "aws_instance" "nat" {
   count                  = "${var.instance_count}"
   ami                    = "${data.aws_ami.ami.id}"
@@ -51,6 +57,7 @@ resource "aws_instance" "nat" {
   vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
   tags                   = "${merge(var.tags, map("Name", format("%s-nat%d", var.name, count.index+1)))}"
   user_data              = "${element(data.template_file.user_data.*.rendered, count.index)}"
+  depends_on             = ["null_resource.ping_bastion"]
 
   provisioner "remote-exec" {
     inline = [
@@ -63,8 +70,9 @@ resource "aws_instance" "nat" {
       # If we are using a bastion host ssh in via the private IP
       # If we set this to an empty string we get the default behaviour.
       host = "${var.ssh_bastion_host != "" ? self.private_ip : ""}"
+
       # host = "${self.public_ip}"
-      private_key  = "${var.aws_key_location}"
+      private_key  = "${file("${var.aws_key_location}")}"
       bastion_host = "${var.ssh_bastion_host}"
       bastion_user = "${var.ssh_bastion_user}"
     }
