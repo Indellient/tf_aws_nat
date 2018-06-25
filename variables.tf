@@ -6,15 +6,11 @@ variable "tags" {
   description = "A map of tags to add to all resources"
 }
 
-variable "ami_name_pattern" {
-  default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
-  description = "The name filter to use in data.aws_ami"
+variable "aws_region" {
+  default = "us-east-1"
 }
 
-variable "ami_publisher" {
-  default     = "099720109477"                            # Canonical
-  description = "The AWS account ID of the AMI publisher"
-}
+variable "ami_id" {}
 
 variable "instance_type" {}
 variable "instance_count" {}
@@ -41,6 +37,10 @@ variable "vpc_security_group_ids" {
 
 variable "aws_key_name" {}
 variable "aws_key_location" {}
+
+variable "ssh_user" {
+  default = "centos"
+}
 
 variable "ssh_bastion_host" {
   default = ""

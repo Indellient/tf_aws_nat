@@ -1,29 +1,9 @@
-data "aws_ami" "ami" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["${var.ami_name_pattern}"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["${var.ami_publisher}"]
-}
-
 data "aws_subnet" "first" {
   id = "${var.public_subnet_ids[0]}"
 }
 
 data "aws_vpc" "vpc" {
   id = "${data.aws_subnet.first.vpc_id}"
-}
-
-data "aws_region" "current" {
-  current = true
 }
 
 data "template_file" "user_data" {
@@ -34,7 +14,7 @@ data "template_file" "user_data" {
     name              = "${var.name}"
     mysubnet          = "${element(var.private_subnet_ids, count.index)}"
     vpc_cidr          = "${data.aws_vpc.vpc.cidr_block}"
-    region            = "${data.aws_region.current.name}"
+    region            = "${var.aws_region}"
     awsnycast_deb_url = "${var.awsnycast_deb_url}"
     identifier        = "${var.route_table_identifier}"
   }
@@ -48,7 +28,7 @@ resource "null_resource" "ping_bastion" {
 
 resource "aws_instance" "nat" {
   count                  = "${var.instance_count}"
-  ami                    = "${data.aws_ami.ami.id}"
+  ami                    = "${var.ami_id}"
   instance_type          = "${var.instance_type}"
   source_dest_check      = false
   iam_instance_profile   = "${aws_iam_instance_profile.nat_profile.id}"
@@ -65,7 +45,7 @@ resource "aws_instance" "nat" {
     ]
 
     connection {
-      user = "ubuntu"
+      user = "${var.ssh_user}"
 
       # If we are using a bastion host ssh in via the private IP
       # If we set this to an empty string we get the default behaviour.
